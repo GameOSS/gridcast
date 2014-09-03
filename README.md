@@ -1,4 +1,4 @@
 Gridcast - Work In Progress
 ======
 
-High performance peer-to-peer publish-subscribe system.
+Java high performance peer-to-peer publish-subscribe system.
