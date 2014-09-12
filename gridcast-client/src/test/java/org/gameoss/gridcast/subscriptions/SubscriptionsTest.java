@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(JUnit4.class)
 public class SubscriptionsTest {
 
+    // in-place executor
     private final Executor executor = new Executor() {
         @Override
         public void execute(Runnable command) {
@@ -47,6 +48,7 @@ public class SubscriptionsTest {
         NodeId id1 = new NodeId();
         NodeId id2 = new NodeId();
 
+        // add three nodes to topic "a"
         Subscriptions subs = new Subscriptions(1000,executor);
         subs.addSubscription("a", id0);
         subs.addSubscription("a", id1);
@@ -60,6 +62,7 @@ public class SubscriptionsTest {
         Assert.assertTrue(contains(ids, id1));
         Assert.assertTrue(contains(ids, id2));
 
+        // remove one node from topic "a"
         subs.removeSubscription("a",id1);
         subs.addFence().get();
 
@@ -78,13 +81,14 @@ public class SubscriptionsTest {
         NodeId id0 = new NodeId();
         NodeId id1 = new NodeId();
 
+        // add two nodes to topic "a" plus a duplicate node
         Subscriptions subs = new Subscriptions(1000,executor);
         subs.addSubscription("a", id0);
         subs.addSubscription("a", id0);
         subs.addSubscription("a", id1);
         subs.addFence().get();
 
-        // verify subscriptions have been added
+        // verify only two subscriptions have been added and the duplicate ignored
         List<NodeId> ids = subs.getSubscribers("a");
         Assert.assertEquals( 2, ids.size() );
         Assert.assertTrue(contains(ids, id0) );
@@ -98,6 +102,7 @@ public class SubscriptionsTest {
         NodeId id0 = new NodeId();
         NodeId id1 = new NodeId();
 
+        // add two nodes to topic "a"
         Subscriptions subs = new Subscriptions(1000,executor);
         subs.addSubscription("a", id0);
         subs.addSubscription("a", id1);
@@ -108,12 +113,13 @@ public class SubscriptionsTest {
         Assert.assertTrue(contains(ids, id0));
         Assert.assertTrue(contains(ids, id1));
 
+        // remove same node 3 times
         subs.removeSubscription("a",id1);
         subs.removeSubscription("a",id1);
         subs.removeSubscription("a",id1);
         subs.addFence().get();
 
-        // verify subscription has been removed
+        // verify the node was removed and the duplicate calls ignored
         ids = subs.getSubscribers("a");
         Assert.assertEquals(1,ids.size());
         Assert.assertTrue(contains(ids, id0));
@@ -128,10 +134,11 @@ public class SubscriptionsTest {
 
         Subscriptions subs = new Subscriptions(1000,executor);
 
+        // remove node that was not subscribed to topic "a"
         subs.removeSubscription("a",id1);
         subs.addFence().get();
 
-        // verify subscription has been removed
+        // verify subscription list is still empty
         List<NodeId> ids = subs.getSubscribers("a");
         Assert.assertNull( ids );
 
@@ -140,15 +147,16 @@ public class SubscriptionsTest {
 
     @Test
     public void unsubscribeOnlyEntry() throws ExecutionException, InterruptedException {
-        NodeId id1 = new NodeId();
+        NodeId id = new NodeId();
 
         Subscriptions subs = new Subscriptions(1000,executor);
 
-        subs.addSubscription("a",id1);
-        subs.removeSubscription("a",id1);
+        // add and then remove a node to topic "a"
+        subs.addSubscription("a",id);
+        subs.removeSubscription("a",id);
         subs.addFence().get();
 
-        // verify subscription has been removed
+        // verify subscription list is empty
         List<NodeId> ids = subs.getSubscribers("a");
         Assert.assertNull( ids );
 
@@ -158,25 +166,29 @@ public class SubscriptionsTest {
 
     @Test
     public void unsubscribeAll() throws ExecutionException, InterruptedException {
-        NodeId id1 = new NodeId();
+        NodeId id = new NodeId();
 
         Subscriptions subs = new Subscriptions(1000,executor);
 
-        subs.addSubscription("a", id1);
-        subs.addSubscription("b", id1);
-        subs.addSubscription("c", id1);
+        // add one node to topics "a", "b", and "c"
+        subs.addSubscription("a", id);
+        subs.addSubscription("b", id);
+        subs.addSubscription("c", id);
         subs.addFence().get();
 
-        Assert.assertTrue( contains(subs.getSubscribers("a"),id1) );
-        Assert.assertTrue( contains(subs.getSubscribers("b"),id1) );
-        Assert.assertTrue( contains(subs.getSubscribers("c"),id1) );
+        // verify node has been added to all three topics
+        Assert.assertTrue( contains(subs.getSubscribers("a"),id) );
+        Assert.assertTrue( contains(subs.getSubscribers("b"),id) );
+        Assert.assertTrue( contains(subs.getSubscribers("c"),id) );
 
-        subs.removeAllSubscriptionsForNode(id1);
+        // bulk remove the node
+        subs.removeAllSubscriptionsForNode(id);
         subs.addFence().get();
 
-        Assert.assertFalse( contains(subs.getSubscribers("a"),id1) );
-        Assert.assertFalse( contains(subs.getSubscribers("b"),id1) );
-        Assert.assertFalse( contains(subs.getSubscribers("c"),id1) );
+        // verify all three topics have no subscribers
+        Assert.assertFalse( contains(subs.getSubscribers("a"),id) );
+        Assert.assertFalse( contains(subs.getSubscribers("b"),id) );
+        Assert.assertFalse( contains(subs.getSubscribers("c"),id) );
 
         subs.shutdown();
     }
@@ -184,37 +196,80 @@ public class SubscriptionsTest {
 
     @Test
     public void listenerAddBefore() throws ExecutionException, InterruptedException {
-        final NodeId id1 = new NodeId();
+        final NodeId id = new NodeId();
 
         Subscriptions subs = new Subscriptions(1000,executor);
 
+        // setup a listener for topic subscriptions
         final AtomicInteger subCount = new AtomicInteger(0);
         final AtomicInteger unsubCount = new AtomicInteger(0);
         SubscriptionListener listener = subs.addSubscriptionListener("a", new SubscriptionListener() {
             @Override
             public void onSubscribe(String topic, NodeId id) {
                 Assert.assertEquals("a", topic);
-                Assert.assertEquals(id1, id);
+                Assert.assertEquals(id, id);
                 subCount.incrementAndGet();
             }
 
             @Override
             public void onUnsubscribe(String topic, NodeId id) {
                 Assert.assertEquals("a", topic);
-                Assert.assertEquals(id1, id);
+                Assert.assertEquals(id, id);
                 unsubCount.incrementAndGet();
             }
         });
 
-        subs.addSubscription("a",id1);
-        subs.removeSubscription("a",id1);
+        // add and remove a node to a topic for listener to see.
+        subs.addSubscription("a",id);
+        subs.removeSubscription("a",id);
         subs.addFence().get();
 
+        // verify we got 1 add and 1 remove
         Assert.assertEquals(1, subCount.get());
         Assert.assertEquals(1, unsubCount.get());
 
         subs.removeSubscriptionListener("a",listener);
+        subs.shutdown();
+    }
 
+
+    @Test
+    public void listenerAddAfter() throws ExecutionException, InterruptedException {
+        final NodeId id = new NodeId();
+
+        Subscriptions subs = new Subscriptions(1000,executor);
+
+        // add node to topic
+        subs.addSubscription("a",id);
+
+        // now add a subscriber listener to make sure it gets called with existing nodes
+        final AtomicInteger subCount = new AtomicInteger(0);
+        final AtomicInteger unsubCount = new AtomicInteger(0);
+        SubscriptionListener listener = subs.addSubscriptionListener("a", new SubscriptionListener() {
+            @Override
+            public void onSubscribe(String topic, NodeId id) {
+                Assert.assertEquals("a", topic);
+                Assert.assertEquals(id, id);
+                subCount.incrementAndGet();
+            }
+
+            @Override
+            public void onUnsubscribe(String topic, NodeId id) {
+                Assert.assertEquals("a", topic);
+                Assert.assertEquals(id, id);
+                unsubCount.incrementAndGet();
+            }
+        });
+
+        // remove node from topic
+        subs.removeSubscription("a",id);
+        subs.addFence().get();
+
+        // verify we got the add and remove
+        Assert.assertEquals(1, subCount.get());
+        Assert.assertEquals(1, unsubCount.get());
+
+        subs.removeSubscriptionListener("a",listener);
         subs.shutdown();
     }
 
@@ -224,13 +279,17 @@ public class SubscriptionsTest {
         final UserData userData = new UserData("My Test Data");
 
         Subscriptions subs = new Subscriptions(1000,executor);
+
+        // add user data object to a topic
         subs.addUserData("a", userData );
         subs.addFence().get();
 
+        // retrieve user data from a topic
         List<Object> data = subs.getUserData("a");
         Assert.assertEquals(1, data.size());
         Assert.assertEquals(userData, data.get(0));
 
+        // remove user data from a topic
         subs.removeUserData("a", userData);
         subs.addFence().get();
 
@@ -242,15 +301,19 @@ public class SubscriptionsTest {
 
     @Test
     public void globalListenerAndCollect() throws ExecutionException, InterruptedException {
-        final NodeId id1 = new NodeId();
+        final NodeId id = new NodeId();
 
         Subscriptions subs = new Subscriptions(1000,executor);
 
+        // add a global listener for all topic subs / unsubs
+        final AtomicInteger subCount = new AtomicInteger(0);
+        final AtomicInteger unsubCount = new AtomicInteger(0);
         SubscriptionListener listener = subs.addGlobalListener( new SubscriptionListener() {
             private int state = 0;
 
             @Override
             public void onSubscribe(String topic, NodeId id) {
+                unsubCount.addAndGet(1);
                 switch (state) {
                     case 0:
                         Assert.assertEquals("a", topic);
@@ -272,6 +335,7 @@ public class SubscriptionsTest {
 
             @Override
             public void onUnsubscribe(String topic, NodeId id) {
+                subCount.addAndGet(1);
                 switch (state) {
                     case 3:
                         Assert.assertEquals("a", topic);
@@ -292,20 +356,22 @@ public class SubscriptionsTest {
             }
         });
 
-        subs.addSubscription("a", id1);
-        subs.addSubscription("b", id1);
-        subs.addSubscription("c", id1);
+        // add node to topic "a", "b", "c"
+        subs.addSubscription("a", id);
+        subs.addSubscription("b", id);
+        subs.addSubscription("c", id);
         subs.addFence().get();
 
-        Assert.assertTrue( contains(subs.getSubscribers("a"),id1) );
-        Assert.assertTrue( contains(subs.getSubscribers("b"),id1) );
-        Assert.assertTrue( contains(subs.getSubscribers("c"),id1) );
+        // verify node was added
+        Assert.assertTrue( contains(subs.getSubscribers("a"),id) );
+        Assert.assertTrue( contains(subs.getSubscribers("b"),id) );
+        Assert.assertTrue( contains(subs.getSubscribers("c"),id) );
 
-
-        subs.collectSubscriptionsForNode(id1, new CollectListener() {
+        // queue query for list of topics a node is subscribed
+        subs.collectSubscriptionsForNode(id, new CollectListener() {
             @Override
             public void onCollectDone(NodeId nodeId, List<String> topics) {
-                Assert.assertEquals( nodeId, id1);
+                Assert.assertEquals( nodeId, id);
                 Assert.assertTrue( topics.contains("a") );
                 Assert.assertTrue( topics.contains("b") );
                 Assert.assertTrue( topics.contains("c") );
@@ -313,17 +379,22 @@ public class SubscriptionsTest {
         });
         subs.addFence().get();
 
-        subs.removeSubscription("a", id1);
-        subs.removeSubscription("b", id1);
-        subs.removeSubscription("c", id1);
+        // remove node from topics
+        subs.removeSubscription("a", id);
+        subs.removeSubscription("b", id);
+        subs.removeSubscription("c", id);
         subs.addFence().get();
 
-        Assert.assertFalse( contains(subs.getSubscribers("a"),id1) );
-        Assert.assertFalse( contains(subs.getSubscribers("b"),id1) );
-        Assert.assertFalse( contains(subs.getSubscribers("c"),id1) );
+        // verify unsubscribe
+        Assert.assertFalse( contains(subs.getSubscribers("a"),id) );
+        Assert.assertFalse( contains(subs.getSubscribers("b"),id) );
+        Assert.assertFalse( contains(subs.getSubscribers("c"),id) );
+
+        // verify global listener was called for each sub and unsub
+        Assert.assertEquals(3, subCount.get());
+        Assert.assertEquals(3, unsubCount.get());
 
         subs.removeGlobalListener(listener);
-
         subs.shutdown();
     }
 
