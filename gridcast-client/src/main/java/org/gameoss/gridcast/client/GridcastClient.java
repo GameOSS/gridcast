@@ -52,11 +52,11 @@ public class GridcastClient implements ClusterListener, SubscriptionListener {
      * Construct a Gridcast client.  Recommended approach is to use {@link GridcastClientBuilder}.
      *
      * @param nodeDiscovery Node discovery provider.
-     * @param msNodePollingTime Time in milliseconds to poll for new nodes.
+     * @param nodePollingTimeInMs Time in milliseconds to poll for new nodes.
      * @param initialTopicCapacity The initial number of topics.
      * @param listenerExecutor Executor for running listener callbacks.
      */
-    public GridcastClient(String hostAddress, int hostPort, NodeDiscovery nodeDiscovery, long msNodePollingTime, int initialTopicCapacity, Executor listenerExecutor) {
+    public GridcastClient(String hostAddress, int hostPort, NodeDiscovery nodeDiscovery, long nodePollingTimeInMs, int initialTopicCapacity, Executor listenerExecutor) {
         // topic subscription table
         subscriptions = new Subscriptions(initialTopicCapacity, listenerExecutor);
         subscriptions.addGlobalListener(this);
@@ -64,7 +64,7 @@ public class GridcastClient implements ClusterListener, SubscriptionListener {
 
         // p2p cluster
         scheduledExecutorService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-        cluster = new ClusterClient(this, hostAddress, hostPort, nodeDiscovery, msNodePollingTime, scheduledExecutorService);
+        cluster = new ClusterClient(this, hostAddress, hostPort, nodeDiscovery, nodePollingTimeInMs, scheduledExecutorService);
         cluster.getMessageRegistry().addCustomMessage( 1, TopicEnvelop.class);
         cluster.getMessageRegistry().addCustomMessage( 2, AddTopicSubscription.class);
         cluster.getMessageRegistry().addCustomMessage( 3, RemoveTopicSubscription.class);

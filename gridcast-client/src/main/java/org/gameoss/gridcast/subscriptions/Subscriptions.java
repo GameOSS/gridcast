@@ -36,8 +36,9 @@ import java.util.concurrent.*;
 import static reactor.event.selector.Selectors.T;
 
 /**
- * Multi-reader, single writer map of topic to subscribers.  It assumes a high
- * number of readers and enforces a single writer using Reactor's RingBuffer.
+ * Multi-reader, single writer map of topic to node subscriptions.  It assumes
+ * a high number of readers and enforces a async single writer using Reactor's
+ * RingBuffer.
  */
 public class Subscriptions {
 
@@ -130,7 +131,8 @@ public class Subscriptions {
     /**
      * Add a global listener that gets called for all subscription changes.
      * The callback occurs on the ring buffer worker thread so the handler
-     * MUST BE FAST to prevent stalling changes to the subscription table.
+     * MUST BE FAST AND NON-BLOCKING to prevent stalling writes to the
+     * subscription table.
      *
      * @param listener
      * @return same listener that was passed into the function.
