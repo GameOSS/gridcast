@@ -400,7 +400,7 @@ public class SubscriptionsTest {
 
 
     /**
-     * Linear search of array for specified value.
+     * Array.contains with added null check.
      *
      * @param array
      * @param searchValue
