@@ -30,7 +30,7 @@ import org.junit.runners.JUnit4;
 import java.util.concurrent.*;
 
 @RunWith(JUnit4.class)
-public class ClientTest {
+public class BasicClientTest {
 
     private final Executor executor = new Executor() {
         @Override
@@ -40,7 +40,7 @@ public class ClientTest {
     };
 
     @Test
-    public void SingleNodeMessage() throws InterruptedException, ExecutionException, TimeoutException {
+    public void singleNodeMessage() throws InterruptedException, ExecutionException, TimeoutException {
         final String topicA = "MyTopicA";
         final String topicB = "MyTopicB";
         final LinkedBlockingQueue<Object> messagesA = new LinkedBlockingQueue<>();
