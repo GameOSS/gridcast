@@ -111,9 +111,9 @@ public class Subscriptions {
                 onRemoveUserData(event.getData());
             }
         });
-        reactor.on( T(FutureTask.class), new Consumer<Event<FutureTask>>() {
+        reactor.on( T(FutureTask.class), new Consumer<Event<FutureTask<?>>>() {
             @Override
-            public void accept(Event<FutureTask> event) {
+            public void accept(Event<FutureTask<?>> event) {
                 event.getData().run();
             }
         });

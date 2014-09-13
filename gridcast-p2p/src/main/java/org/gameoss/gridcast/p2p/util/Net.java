@@ -45,7 +45,7 @@ public class Net {
             // Enumerate NICs looking for a reasonable IP
             String bestAddress = localhost;
             int bestScore = 0;
-            Enumeration e = NetworkInterface.getNetworkInterfaces();
+            Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
             while(e.hasMoreElements())
             {
                 NetworkInterface n = (NetworkInterface) e.nextElement();
@@ -62,7 +62,7 @@ public class Net {
                 }
 
                 // get first IP associated with NIC
-                Enumeration ee = n.getInetAddresses();
+                Enumeration<InetAddress> ee = n.getInetAddresses();
                 while (ee.hasMoreElements())
                 {
                     int score = baseScore;

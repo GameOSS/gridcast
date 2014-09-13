@@ -22,8 +22,10 @@ package org.gameoss.gridcast.p2p.serialization;
 
 import org.gameoss.gridcast.p2p.message.MessageRegistry;
 import org.gameoss.gridcast.p2p.node.NodeId;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,20 +79,14 @@ public class SerializationTest {
         private int integerValue;
         private String stringValue;
 
-        public DataObject() {
+        @SuppressWarnings("unused")
+		public DataObject() {
+        	// empty constructor for serialization
         }
 
         public DataObject(int integerValue, String stringValue) {
             this.integerValue = integerValue;
             this.stringValue = stringValue;
-        }
-
-        public int getIntegerValue() {
-            return integerValue;
-        }
-
-        public String getStringValue() {
-            return stringValue;
         }
 
         @Override

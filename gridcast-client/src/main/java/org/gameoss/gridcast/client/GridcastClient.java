@@ -221,7 +221,9 @@ public class GridcastClient implements ClusterListener, SubscriptionListener {
             subscriptions.collectSubscriptionsForNode(localNodeId, new CollectListener() {
                 @Override
                 public void onCollectDone(NodeId nodeId, List<String> topics) {
-                    GridcastClient.this.cluster.sendMessage(targetNodeId, new AddTopicSubscription(localNodeId, topics));
+                	if (GridcastClient.this.cluster != null ) {
+                		GridcastClient.this.cluster.sendMessage(targetNodeId, new AddTopicSubscription(localNodeId, topics));
+                	}
                 }
             });
         }
