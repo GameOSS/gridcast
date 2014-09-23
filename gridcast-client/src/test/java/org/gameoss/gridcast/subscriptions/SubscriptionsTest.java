@@ -339,15 +339,15 @@ public class SubscriptionsTest {
                 switch (state) {
                     case 3:
                         Assert.assertEquals("a", topic);
-                        state = 3;
+                        state = 4;
                         break;
                     case 4:
                         Assert.assertEquals("b", topic);
-                        state = 4;
+                        state = 5;
                         break;
                     case 5:
                         Assert.assertEquals("c", topic);
-                        state = 5;
+                        state = 6;
                         break;
                     default:
                         Assert.fail("Invalid state");
